@@ -2,24 +2,22 @@
 * 201003051 컴퓨터공학부 고종욱
 * thanks for Bbulbum
 */
-var express = require('express');
-var cluster = require('express-cluster');
-var session = require('express-session');
-var SessionStore = require('express-mysql-session');
-var oracledb = require('oracledb');
-var bodyParser= require('body-parser');
-var morgan = require('morgan');
-var fs = require('fs');
-var path = require('path');
-var rfs = require('rotating-file-stream');
-
-var dbConfig = require('./dbconfig.js');
-var ssconfig = require('./ssconfig.js');
-var logDirectory = path.join(__dirname+ '/log');
+const express = require('express');
+const cluster = require('express-cluster');
+const session = require('express-session');
+const oracledb = require('oracledb');
+const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
+const rfs = require('rotating-file-stream');
+const config = require('./config.js');
+const dbConfig = config.dbconfig;
+const logDirectory = path.join(__dirname+ '/log');
+const contact = require('./routes/contact.js');
 
 fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory)
 
-var accessLogStream = rfs('phonebook.log',{
+const accessLogStream = rfs('phonebook.log',{
 	interval : '7d',
 	size : '10M',
 	path : logDirectory
@@ -51,18 +49,16 @@ morgan.token('ktime',function() {
 	return year+'-'+month+'-'+date+' '+hour+':'+min+':'+sec;
 })
 
-var contact = require('./routes/contact.js');
+
 
 cluster(function(worker) {
 	var app = express();
 
-	app.use(bodyParser.json());
-	app.use(bodyParser.urlencoded({extended: true}));
 	app.use(morgan(":ktime -" + worker.id+ "호 IP:remote-addr|:method:url 결과:status 응답시간 :response-time ms",{stream:accessLogStream}));
 	app.use(morgan(worker.id+"호 IP:remote-addr|:method:url 결과:status 응답시간 :response-time ms"));
 	app.use(session({
-		key: ssconfig.session_key,
-		secret: ssconfig.session_secret,
+		key: config.session_key,
+		secret: config.session_secret,
 		resave: true,
 		saveUninitialized: false
 	}));
@@ -77,7 +73,7 @@ cluster(function(worker) {
 
 	//웹서버시작전 풀 만들어야함
 
-	oracledb.createPool ( dbConfig, (err, pool)=>{
+	oracledb.createPool (dbConfig, (err, pool)=>{
 		app.listen(8080, function() {
 			console.log('Inu Contact node oracle cluster server ' + worker.id +' 호기 작동' );
 		});

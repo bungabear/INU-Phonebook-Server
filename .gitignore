@@ -1,5 +1,4 @@
-ssconfig.js
-dbconfig.js
+config.js
 package-lock.json
 node_modules/
 log/
