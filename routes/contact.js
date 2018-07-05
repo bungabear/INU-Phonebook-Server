@@ -30,7 +30,7 @@ function getcontactgroup(req, res, next) {
 	let bindvar = {}
 	let pool = oracledb.getPool();
 	pool.getConnection((err,connection)=>{
-			connection.execute( sql, bindvar, {maxRows:2000}, (err, results)=> {
+			pool.execute( sql, bindvar, {maxRows:2000}, (err, results)=> {
 				if(err){
 					next(err);
 					return;
